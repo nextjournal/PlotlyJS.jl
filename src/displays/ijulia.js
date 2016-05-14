@@ -9,20 +9,9 @@
 	}
     }
 
-    function resolve_promises(comm, val) {
-        val === undefined && (val = null);
-        if (val && val.constructor == Promise) {
-            val.then(function(val) {
-                return resolve_promises(comm, val);
-            })
-        } else {
-            return val;
-        }
-    }
-
     $(document).ready(function() {
-	function initComm(evt, data) {
-	    var comm_manager = data.kernel.comm_manager;
+	function initComm(evt, nb) {
+	    var comm_manager = nb.kernel.comm_manager;
         console.log("plotly comm init");
 	    comm_manager.register_target("plotlyjs_eval", function (comm) {
             comm.on_msg(function (msg) {
@@ -40,11 +29,16 @@
                 val = eval(msg.content.data.code);
 
                 // resolve any promises so we get a raw value
-                val = resolve_promises(comm, val);
-                console.log("About to send", val);
+                val === undefined && (val = null);
+                if (val && val.constructor == Promise) {
+                    val.then(function(real_val) {
+                        // Send the value back to Julia
+                        comm.send({action: "plotlyjs_ret_val", ret: val});
+                    });
+                } else {
+                    comm.send({action: "plotlyjs_ret_val", ret: val});
+                }
 
-                // Send the value back to Julia
-                comm.send({action: "plotlyjs_ret_val", ret: val});
 
                 // Clean up
                 delete msg.content.data.code;  // clean up

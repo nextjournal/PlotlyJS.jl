@@ -58,6 +58,7 @@ if isdefined(Main, :IJulia) && Main.IJulia.inited
 
     @eval begin
         import IJulia
+        import IJulia: @vprintln
         import IJulia.CommManager: Comm, send_comm
     end
 
@@ -72,13 +73,33 @@ if isdefined(Main, :IJulia) && Main.IJulia.inited
             comm = Comm(:plotlyjs_return)
 
             function handle_comm_msg(msg)
-                open(joinpath(ENV["HOME"], "from_plotly_comm.txt"), "w") do f
-                    print(f, "I am in on_msg from plotly")
+                open(joinpath(ENV["HOME"], "from_plotly_comm2.txt"), "w") do f
+                    println(f, """This is msg:\n$(msg)\n\n\n""")
+                    println(f, """This is msg.content:\n$(msg.content)\n\n\n""")
+                    println(f, """This is msg.content["data"]:\n$(msg.content["data"])\n\n\n""")
+                    # println(f, "I am in on_msg from plotly")
                 end
+
                 if haskey(msg.content, "data")
+                    open(joinpath(ENV["HOME"], "from_plotly_comm2.txt"), "a") do f
+                        println(f, "passed the if haskey check\n\n")
+                    end
                     action = get(msg.content["data"], "action", "")
+
+                    open(joinpath(ENV["HOME"], "from_plotly_comm2.txt"), "a") do f
+                        println(f, "Got action: $(action)\n\n")
+                    end
                     if action == "plotlyjs_ret_val"
-                        val = msg.content["data"]["ret"]
+
+                        open(joinpath(ENV["HOME"], "from_plotly_comm2.txt"), "a") do f
+                            println(f, "Passed the if action == check\n\n")
+                        end
+                        @show val = msg.content["data"]["ret"]
+
+                        open(joinpath(ENV["HOME"], "from_plotly_comm2.txt"), "a") do f
+                            println(f, "Got val: $(val)\n\n")
+                        end
+                        # Main.IJulia.@vprintln("\n\n\n\n\n\n\nWe got a val! $val\n\n\n\n\n\n\n")
                         # now that we have the value, we can notify waiting
                         # tasks that the return value is ready
                         notify(jd.cond, val)
@@ -108,8 +129,8 @@ if isdefined(Main, :IJulia) && Main.IJulia.inited
 end
 
 function _call_js_return(jd::JupyterDisplay, code)
-    send_comm(get_comm(jd), Dict("code" => code))  # will trigger `on_msg`
-    wait(jd.cond)  # wait for `notify` within `comm.on_msg` to be called
+    Main.IJulia.CommManager.send_comm(get_comm(jd), Dict{Any,Any}("code" => code))  # will trigger `on_msg`
+    return wait(jd.cond)  # wait for `notify` within `comm.on_msg` to be called
 end
 
 _call_js(jd::JupyterDisplay, code) =
