@@ -25,6 +25,7 @@ end
 
 # include the rest of the core parts of the package
 include("json.jl")
+include("display.jl")
 include("subplots.jl")
 include("api.jl")
 
