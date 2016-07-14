@@ -2,7 +2,6 @@ module PlotlyJS
 
 using Compat; import Compat.String
 using JSON
-using Blink
 using Colors
 
 # export some names from JSON
@@ -26,14 +25,11 @@ end
 
 # include the rest of the core parts of the package
 include("json.jl")
-include("display.jl")
 include("subplots.jl")
 include("api.jl")
-include("savefig.jl")
 
 # Set some defaults for constructing `Plot`s
 Plot() = Plot(GenericTrace{Dict{Symbol,Any}}[], Layout(), Base.Random.uuid4())
-
 Plot{T<:AbstractTrace}(data::Vector{T}, layout=Layout()) =
     Plot(data, layout, Base.Random.uuid4())
 
@@ -44,11 +40,8 @@ Plot(data::AbstractTrace, layout=Layout()) = Plot([data], layout)
 export
 
     # core types
-    Plot, GenericTrace, Layout, Shape, ElectronDisplay, JupyterDisplay,
-    ElectronPlot, JupyterPlot, AbstractTrace, AbstractLayout,
-
-    # other methods
-    savefig, svg_data, png_data, jpeg_data, webp_data,
+    Plot, GenericTrace, Layout, Shape,
+    AbstractTrace, AbstractLayout,
 
     # plotly.js api methods
     restyle!, relayout!, addtraces!, deletetraces!, movetraces!, redraw!,
@@ -59,9 +52,6 @@ export
     extendtraces, prependtraces,
 
     # helper methods
-    plot, fork, vline, hline, attr,
-
-    # frontend methods
-    init_notebook
+    plot, fork, vline, hline, attr
 
 end # module
