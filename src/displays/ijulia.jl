@@ -33,9 +33,7 @@ function html_body(p::JupyterPlot)
     """
 end
 
-_isijulia() = isdefined(Main, :IJulia) && Main.IJulia.inited
-
-function init_notebook()
+function init_notebook(force=false)
     # TODO: figure out a way to ask the notebook if the js is currently loaded
     #       and active.
 
@@ -44,57 +42,29 @@ function init_notebook()
     if _isijulia()
         # borrowed from https://github.com/plotly/plotly.py/blob/2594076e29584ede2d09f2aa40a8a195b3f3fc66/plotly/offline/offline.py#L64-L71
         # and https://github.com/JuliaLang/Interact.jl/blob/cc5f4cfd34687000bc6bc70f0513eaded1a7c950/src/IJulia/setup.jl#L15
-        if !js_loaded(JupyterDisplay)
-            const _ijulia_js = readall(joinpath(dirname(@__FILE__), "ijulia.js"))
+        if !js_loaded(JupyterDisplay) || force
+            _ijulia_js = readstring(joinpath(dirname(@__FILE__), "ijulia.js"))
+
+            # three script tags for loading ijulia setup, and plotly
             display("text/html", """
             <script charset="utf-8" type='text/javascript'>
                 $(_ijulia_js)
             </script>
+
              <script charset="utf-8" type='text/javascript'>
                  define('plotly', function(require, exports, module) {
-                     $(open(readall, _js_path, "r"))
+                     $(open(readstring, _js_path, "r"))
                  });
                  require(['plotly'], function(Plotly) {
                      window.Plotly = Plotly;
                  });
              </script>
              <p>Plotly javascript loaded.</p>
-             <p>To load again call <pre>init_notebook()</pre></p>
+             <p>To load again call <pre>init_notebook(true)</pre></p>
              """)
             _jupyter_js_loaded[1] = true
         end
     end
-end
-
-# --------------------------------------------- #
-# Code to run once when the notebook starts up! #
-# --------------------------------------------- #
-
-if _isijulia()
-
-    init_notebook()
-
-    @eval begin
-        import IJulia
-        import IJulia.CommManager: Comm, send_comm
-    end
-
-    # set up the comms we will use to send js messages to be executed
-    const _ijulia_eval_comm = Comm(:plotlyjs_eval)
-    const _ijulia_return_comms = Dict{Base.Random.UUID,Comm}()
-
-    IJulia.display_dict(p::Plot) =
-        Dict("text/plain" => sprint(writemime, "text/plain", p))
-
-    function IJulia.display_dict(p::JupyterPlot)
-        if p.view.displayed
-            Dict()
-        else
-            p.view.displayed = true
-            Dict("text/html" => html_body(p))
-        end
-    end
-
 end
 
 # ---------------- #

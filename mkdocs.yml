@@ -12,12 +12,15 @@ pages:
     - Building Blocks: building_traces_layouts.md
     - Putting it together: syncplots.md
     - Working with plots: manipulating_plots.md
+    - Styles: styles.md
+    - Contributing: contributing.md
 - Examples:
     - examples/3d.md
     - examples/area.md
     - examples/contour.md
     - examples/histograms.md
     - examples/line_scatter.md
+    - examples/time_series.md
     - examples/maps.md
     - examples/subplots.md
     - examples/shapes.md
@@ -31,7 +34,7 @@ markdown_extensions:
 google_analytics: ['UA-36732392-3', 'auto']
 
 extra:
-  version: '0.3.1'
+  version: '0.4.3'
   author:
     github: 'spencerlyon2'
 extra_css: [css/github.css]

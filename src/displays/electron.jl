@@ -3,14 +3,16 @@
 # ----------- #
 
 type ElectronDisplay <: AbstractPlotlyDisplay
+    divid::Base.Random.UUID
     w::Nullable{Window}
     js_loaded::Bool
 end
 
 typealias ElectronPlot SyncPlot{ElectronDisplay}
 
-ElectronDisplay() = ElectronDisplay(Nullable{Window}(), false)
-ElectronPlot(p::Plot) = ElectronPlot(p, ElectronDisplay())
+ElectronDisplay(divid::Base.Random.UUID) = ElectronDisplay(divid, Nullable{Window}(), false)
+ElectronDisplay(p::Plot) = ElectronDisplay(p.divid)
+ElectronPlot(p::Plot) = ElectronPlot(p, ElectronDisplay(p.divid))
 
 fork(jp::ElectronPlot) = ElectronPlot(fork(jp.plot), ElectronDisplay())
 
@@ -18,7 +20,7 @@ isactive(ed::ElectronDisplay) = isnull(ed.w) ? false : Blink.active(get(ed.w))
 
 Base.close(ed::ElectronDisplay) = isactive(ed) && close(get(ed.w))
 
-function get_window(p::ElectronPlot, kwargs...)
+function get_window(p::ElectronPlot; kwargs...)
     w, h = size(p.plot)
     get_window(p.view; width=w, height=h, kwargs...)
 end
@@ -38,48 +40,93 @@ js_loaded(ed::ElectronDisplay) = ed.js_loaded
 
 function loadjs(ed::ElectronDisplay)
     if !ed.js_loaded
+        Blink.loadjs!(get_window(ed), _mathjax_cdn_path)
         Blink.load!(get_window(ed), _js_path)
         ed.js_loaded = true
     end
 end
 
-function Base.display(p::ElectronPlot)
-    w = get_window(p)
+function Base.display(p::ElectronPlot; show=true, resize::Bool=_autoresize[1])
+    w = get_window(p, show=show)
     loadjs(p.view)
-    @js w begin
-        trydiv = document.getElementById($(string(p.plot.divid)))
-        if trydiv == nothing
-            thediv = document.createElement("div")
-            thediv.id = $(string(p.plot.divid))
-            document.body.appendChild(thediv)
-        else
-            thediv = trydiv
+    lowered = JSON.lower(p.plot)
+    if !resize
+        @js w begin
+            trydiv = document.getElementById($(string(p.plot.divid)))
+            if trydiv == nothing
+                @var gd = document.createElement("div")
+                gd.id = $(string(p.plot.divid))
+                document.body.appendChild(gd)
+            else
+                @var gd = trydiv
+            end
+            @var _ = Plotly.newPlot(gd, $(json(lowered[:data])),
+            $(json(lowered[:layout])),
+            d("showLink"=> false))
+            _.then(()->Promise.resolve())
         end
-        @var _ = Plotly.newPlot(thediv, $(p.plot.data),
-                                $(p.plot.layout),
-                                d("showLink"=> false))
-        _.then(()->Promise.resolve())
+    else
+        # remove the width and height fields on the layout or
+        # the autoresize won't work
+        pop!(p.plot.layout.fields, :width, nothing)
+        pop!(p.plot.layout.fields, :height, nothing)
+        magic = """
+        <script>
+        (function() {
+            var d3 = Plotly.d3
+            var WIDTH_IN_PERCENT_OF_PARENT = 100
+            var HEIGHT_IN_PERCENT_OF_PARENT = 100;
+            var gd3 = d3.select('body')
+            .append('div').attr("id", "$(p.plot.divid)")
+            .style({
+                width: WIDTH_IN_PERCENT_OF_PARENT + '%',
+                'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+                height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh',
+                'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+            });
+            var gd = gd3.node();
+            var data = $(json(p.plot.data));
+            var layouts = $(json(p.plot.layout));
+            Plotly.newPlot(gd, data, layouts);
+            window.onresize = function() {
+            Plotly.Plots.resize(gd);
+            };
+        })();
+        </script>
+        """
+        Blink.body!(w, magic)
     end
     p.plot
 end
 
 ## API Methods for ElectronDisplay
-function _img_data(p::ElectronPlot, format::String)
+function _img_data(p::ElectronPlot, format::String; show::Bool=false)
     _formats = ["png", "jpeg", "webp", "svg"]
     if !(format in _formats)
         error("Unsupported format $format, must be one of $_formats")
     end
 
-    display(p)
+    opened_here = !isactive(p.view)
+    opened_here && display(p; show=show, resize=false)
 
-    @js p.view begin
+    out = @js p.view begin
         ev = Plotly.Snapshot.toImage(this, d("format"=>$format))
         @new Promise(resolve -> ev.once("success", resolve))
     end
+    opened_here && close(p)
+    out
 end
 
-svg_data(p::ElectronPlot, format="png") =
-    @js p.view Plotly.Snapshot.toSVG(this, $format)
+function svg_data(p::ElectronPlot, format="png")
+    opened_here = !isactive(p.view)
+    opened_here && display(p; show=false, resize=false)
+
+    out = @js p.view Plotly.Snapshot.toSVG(this, $format)
+
+    opened_here && close(p)
+
+    return out
+end
 
 Base.close(p::ElectronPlot) = close(p.view)
 
@@ -87,8 +134,11 @@ function Blink.js(p::ElectronDisplay, code::JSString; callback=true)
     if !isactive(p)
         return
     end
+
     Blink.js(get_window(p),
-             :(Blink.evalwith(thediv, $(Blink.jsstring(code)))), callback=callback)
+             :(Blink.evalwith(document.getElementById($(string(p.divid))),
+                              $(Blink.jsstring(code)))),
+             callback=callback)
 end
 
 Blink.js(p::ElectronPlot, code::JSString; callback=true) =
