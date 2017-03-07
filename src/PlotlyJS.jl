@@ -98,9 +98,6 @@ export
     # new trace types
     stem,
 
-    # frontend methods
-    init_notebook,
-
     # styles
     use_style!, style, Style
 
