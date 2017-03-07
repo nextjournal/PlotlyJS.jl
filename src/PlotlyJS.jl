@@ -101,4 +101,7 @@ export
     # styles
     use_style!, style, Style
 
+  function __init__()
+    global const DEFAULT_STYLE = [Style()]
+  end
 end # module
