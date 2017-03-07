@@ -93,7 +93,7 @@ export
     extendtraces, prependtraces,
 
     # helper methods
-    plot, fork, vline, hline, attr
+    plot, fork, vline, hline, attr,
 
     # new trace types
     stem,
