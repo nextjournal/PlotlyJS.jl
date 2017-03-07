@@ -139,7 +139,7 @@ hline(y, xmin, xmax, fields::Associative=Dict{Symbol,Any}(); kwargs...) =
 Draw horizontal lines at each point in `y` that span the width of the plot
 """
 hline(y, fields::Associative=Dict{Symbol,Any}(); kwargs...) =
-    hline(y, 0, 1, fields; xref="paper", yref="y")
+    hline(y, 0, 1, fields; xref="paper", yref="y", kwargs...)
 
 # ---------------------------------------- #
 # Implementation of getindex and setindex! #
@@ -206,6 +206,8 @@ end
 Base.start(hf::HasFields) = start(hf.fields)
 Base.next(hf::HasFields, x) = next(hf.fields, x)
 Base.done(hf::HasFields, x) = done(hf.fields, x)
+
+=={T<:HasFields}(hf1::T, hf2::T) = hf1.fields == hf2.fields
 
 # methods that allow you to do `obj["first.second.third"] = val`
 function Base.setindex!(gt::HasFields, val, key::String)

@@ -8,12 +8,12 @@ area1()
 ```
 
 
-<div id="35fe5ebb-67b5-4dd1-bb13-915a16f790d0" class="plotly-graph-div"></div>
+<div id="2597c84a-6e37-43a3-9615-1601a19cbe2f" class="plotly-graph-div"></div>
 
 <script>
     window.PLOTLYENV=window.PLOTLYENV || {};
     window.PLOTLYENV.BASE_URL="https://plot.ly";
-    Plotly.newPlot('35fe5ebb-67b5-4dd1-bb13-915a16f790d0', [{"y":[0,2,3,5],"type":"scatter","x":[1,2,3,4],"fill":"tozeroy"},{"y":[3,5,1,7],"type":"scatter","x":[1,2,3,4],"fill":"tonexty"}],
+    Plotly.newPlot('2597c84a-6e37-43a3-9615-1601a19cbe2f', [{"y":[0,2,3,5],"type":"scatter","x":[1,2,3,4],"fill":"tozeroy"},{"y":[3,5,1,7],"type":"scatter","x":[1,2,3,4],"fill":"tonexty"}],
                {"margin":{"r":0,"l":0,"b":0,"t":0}}, {showLink: false});
 
  </script>
@@ -42,12 +42,12 @@ area2()
 ```
 
 
-<div id="bfb5bb72-4b02-4bed-81f5-003cc3d54dcc" class="plotly-graph-div"></div>
+<div id="b74231f9-33c9-4d86-a702-cd953038b504" class="plotly-graph-div"></div>
 
 <script>
     window.PLOTLYENV=window.PLOTLYENV || {};
     window.PLOTLYENV.BASE_URL="https://plot.ly";
-    Plotly.newPlot('bfb5bb72-4b02-4bed-81f5-003cc3d54dcc', [{"y":[2,1,4],"type":"scatter","x":[1,2,3],"fill":"tozeroy"},{"y":[3,2,6],"type":"scatter","x":[1,2,3],"fill":"tonexty"},{"y":[6,2,8],"type":"scatter","x":[1,2,3],"fill":"tonexty"}],
+    Plotly.newPlot('b74231f9-33c9-4d86-a702-cd953038b504', [{"y":[2,1,4],"type":"scatter","x":[1,2,3],"fill":"tozeroy"},{"y":[3,2,6],"type":"scatter","x":[1,2,3],"fill":"tonexty"},{"y":[6,2,8],"type":"scatter","x":[1,2,3],"fill":"tonexty"}],
                {"title":"stacked and filled line chart","margin":{"r":0,"l":0,"b":0,"t":0}}, {showLink: false});
 
  </script>
@@ -65,12 +65,12 @@ area3()
 ```
 
 
-<div id="ce2d8e30-ef62-4634-b932-cf1acd983fea" class="plotly-graph-div"></div>
+<div id="8d58e511-a32f-4fc7-9dee-3a075290d15a" class="plotly-graph-div"></div>
 
 <script>
     window.PLOTLYENV=window.PLOTLYENV || {};
     window.PLOTLYENV.BASE_URL="https://plot.ly";
-    Plotly.newPlot('ce2d8e30-ef62-4634-b932-cf1acd983fea', [{"y":[0,2,3,5],"type":"scatter","x":[1,2,3,4],"fill":"tozeroy","mode":"none"},{"y":[3,5,1,7],"type":"scatter","x":[1,2,3,4],"fill":"tonexty","mode":"none"}],
+    Plotly.newPlot('8d58e511-a32f-4fc7-9dee-3a075290d15a', [{"y":[0,2,3,5],"type":"scatter","x":[1,2,3,4],"fill":"tozeroy","mode":"none"},{"y":[3,5,1,7],"type":"scatter","x":[1,2,3,4],"fill":"tonexty","mode":"none"}],
                {"title":"Overlaid Chart Without Boundary Lines","margin":{"r":0,"l":0,"b":0,"t":0}}, {showLink: false});
 
  </script>

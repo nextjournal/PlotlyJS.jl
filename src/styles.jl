@@ -72,8 +72,9 @@ end
     end
 end
 
-const DEFAULT_STYLE = [Style()]
-const STYLES = [:default, :ggplot, :fivethirtyeight, :seaborn]
+function ==(s1::Style, s2::Style)
+    all(nm -> getfield(s1, nm) == getfield(s2, nm), fieldnames(s1))
+end
 
 function ggplot_style()
     axis = attr(showgrid=true, gridcolor="white", linewidth=1.0,
@@ -142,14 +143,87 @@ function seaborn_style()
     Style(color_cycle=colors, trace=ta, layout=layout)
 end
 
-reset_style!() = DEFAULT_STYLE[1] = Style()
-use_style!(sty::Symbol) = DEFAULT_STYLE[1] = style(sty)
-use_style!(s::Style) = DEFAULT_STYLE[1] = s
+# This theme was taken from here:
+# https://github.com/dcjones/Gadfly.jl/blob/cb28d6aca6b031d01e44146799e520b8bb0d349b/src/theme.jl#L342-L409
+function gadfly_dark_style()
+    label_color = colorant"#a1a1a1"
+    bgcolor = colorant"#222831"
+    grid_color = colorant"#575757"
+
+    color_cycle = ["#FE4365", "#ECA25C", "#3F9778", "#EEDBFF", "#236EAD",
+                   "#60F6FF", "#D4EC9F", "#7E674B", "#9E7EC1", "#7CB5FB"]
+
+    axis = attr(showgrid=true, gridcolor=grid_color, gridwidth=0.35,
+                linecolor=grid_color, titlefont_color=label_color,
+                linewidth=1.2, titlefont_size=14, tickcolor=label_color
+                )
+
+    layout = Layout(plot_bgcolor=bgcolor,
+                    paper_bgcolor=bgcolor,
+                    font_size=10,
+                    xaxis=axis,
+                    yaxis=axis,
+                    font_color=label_color,
+                    titlefont_size=14,
+                    margin=attr(l=40, r=10, t=10, b=30))
+
+
+    Style(color_cycle=color_cycle, layout=layout)
+end
+
+function tomorrow_night_eighties_style()
+
+    bgcolor = colorant"#2d2d2d"  # Background
+    grid_color = colorant"#515151"  # Selection
+    label_color = colorant"#cccccc"  # Comment
+    color_cycle = [
+                    "#cc99cc",
+                    "#66cccc",
+                    "#f2777a",
+                    "#ffcc66",
+                    "#99cc99",
+                    "#f99157",
+                    "#6699cc",
+                   ]
+
+    axis = attr(showgrid=true, gridcolor=grid_color, gridwidth=0.35,
+                linecolor=grid_color, titlefont_color=label_color,
+                linewidth=1.2, titlefont_size=14, tickcolor=label_color
+                )
+
+    layout = Layout(plot_bgcolor=bgcolor,
+                    paper_bgcolor=bgcolor,
+                    font_size=10,
+                    xaxis=axis,
+                    yaxis=axis,
+                    font_color=label_color,
+                    titlefont_size=14,
+                    margin=attr(l=65, r=65, t=65, b=65))
+
+
+    Style(color_cycle=color_cycle, layout=layout)
+end
 
 function style(sty::Symbol)
     sty == :ggplot ? ggplot_style() :
     sty == :fivethirtyeight ? fivethirtyeight_style() :
     sty == :seaborn ? seaborn_style() :
-    sty == :default ? Style() :
+    sty == :gadfly_dark ? gadfly_dark_style() :
+    sty == :tomorrow_night_eighties ? tomorrow_night_eighties_style() :
+    sty == :default ? _default_style() :
     error("Uknown style $sty")
 end
+
+const STYLES = [:default, :ggplot, :fivethirtyeight, :seaborn, :gadfly_dark,
+                :tomorrow_night_eighties]
+
+function _default_style()
+    env = Symbol(get(ENV, "PLOTLYJS_STYLE", ""))
+
+    env in STYLES ? style(env) :
+    Juno.isactive() ? style(:gadfly_dark) : Style()
+end
+
+reset_style!() = DEFAULT_STYLE[1] = _default_style()
+use_style!(sty::Symbol) = DEFAULT_STYLE[1] = style(sty)
+use_style!(s::Style) = DEFAULT_STYLE[1] = s

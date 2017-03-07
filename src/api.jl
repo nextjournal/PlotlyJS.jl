@@ -15,19 +15,19 @@ Return the size of the plot in pixels. Obtained from the `layout.width` and
 Base.size(p::Plot) = (get(p.layout.fields, :width, 800),
                       get(p.layout.fields, :height, 450))
 
-
-for t in [:histogram, :scatter3d, :surface, :mesh3d, :bar, :histogram2d,
-          :histogram2dcontour, :scatter, :scatterternary, :pie, :heatmap,
-          :contour, :scattergl, :box, :area, :choropleth, :scattergeo]
+for t in [:histogram, :scatter3d, :pointcloud, :surface, :mesh3d, :bar,
+          :histogram2d, :histogram2dcontour, :ohlc, :scatterternary, :pie,
+          :heatmap, :scattermapbox, :scatter, :contour, :candlestick,
+          :scattergl, :box, :area, :choropleth, :scattergeo]
     str_t = string(t)
     @eval $t(;kwargs...) = GenericTrace($str_t; kwargs...)
-    @eval $t(d::Associative; kwargs...) = GenericTrace($str_t, d; kwargs...)
+    @eval $t(d::Associative; kwargs...) = GenericTrace($str_t, _symbol_dict(d); kwargs...)
     eval(Expr(:export, t))
 end
 
 Base.copy{HF<:HasFields}(hf::HF) = HF(deepcopy(hf.fields))
 Base.copy(p::Plot) = Plot(AbstractTrace[copy(t) for t in p.data], copy(p.layout))
-fork(p::Plot) = Plot(deepcopy(p.data), copy(p.layout), Base.Random.uuid4())
+fork(p::Plot) = Plot(deepcopy(p.data), copy(p.layout))
 
 # -------------- #
 # Javascript API #
@@ -236,6 +236,9 @@ movetraces!(p::Plot, src::AbstractVector{Int}, dest::AbstractVector{Int}) =
 
 # no-op here
 redraw!(p::Plot) = nothing
+purge!(p::Plot) = nothing
+to_image(p::Plot; kwargs...) = nothing
+download_image(p::Plot; kwargs...) = nothing
 
 # --------------------------------- #
 # unexported methods in plot_api.js #
@@ -306,7 +309,7 @@ end
 
 for f in (:extendtraces!, :prependtraces!)
     @eval begin
-        $(f)(p::Plot, inds::Vector{Int}=[0], maxpoints=-1; update...) =
+        $(f)(p::Plot, inds::Vector{Int}=[1], maxpoints=-1; update...) =
             ($f)(p, Dict(map(x->(x[1], _tovec(x[2])), update)), inds, maxpoints)
 
         $(f)(p::Plot, ind::Int, maxpoints=-1; update...) =

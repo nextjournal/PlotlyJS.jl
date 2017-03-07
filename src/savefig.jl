@@ -53,13 +53,13 @@ function savefig_imagemagick(p::ElectronPlot, fn::AbstractString; js::Symbol=:lo
     # if html we don't need a plot window
     if suf == "html"
         open(fn, "w") do f
-            writemime(f, MIME"text/html"(), p, js)
+            show(f, MIME"text/html"(), p, js)
         end
         return p
     end
 
     # for all the rest we need an active plot window
-    show(p)
+    display(p)
 
     # we can export svg directly
     if suf == "svg"
@@ -108,7 +108,15 @@ function savefig(p::ElectronPlot, fn::AbstractString; js::Symbol=:local)
     # if html we don't need a plot window
     if suf == "html"
         open(fn, "w") do f
-            writemime(f, MIME"text/html"(), p, js)
+            show(f, MIME"text/html"(), p, js)
+        end
+        return p
+    end
+
+    # same for json
+    if suf == "json"
+        open(fn, "w") do f
+            print(f, json(p))
         end
         return p
     end
@@ -127,8 +135,13 @@ function savefig(p::ElectronPlot, fn::AbstractString; js::Symbol=:local)
 
     # now we need to use librsvg/Cairo to finish
     try
-        @eval import Rsvg
-        @eval import Cairo
+        # use using and import just one thing because import doesn't appear
+        # to precompile. Then import so we can get the module name too??
+        # this all feels strange to me, but by trial and error I found that
+        # this works
+        @eval using Rsvg: handle_new_from_data
+        @eval using Cairo: CairoPDFSurface
+        @eval import Rsvg, Cairo
     catch e
         if isa(e, ArgumentError)
             msg = string("You need to install the Rsvg package use this",
@@ -164,7 +177,7 @@ function savefig(p::ElectronPlot, fn::AbstractString; js::Symbol=:local)
         error("Only html, svg, png, pdf, eps output supported")
     end
 
-    p
+    fn
 end
 
 function png_data(p::ElectronPlot)

@@ -3,14 +3,20 @@
 # -------------------------------- #
 JSON.lower(a::HasFields) = a.fields
 
-function _apply_style_axis!(p::Plot, ax)
-    if haskey(p.style.layout.fields, Symbol(ax, "axis"))
+function _apply_style_axis!(p::Plot, ax, force::Bool=false)
+    if haskey(p.style.layout.fields, Symbol(ax, "axis")) || force
         ax_names = filter(_-> startswith(string(_), "$(ax)axis"),
                           keys(p.layout.fields))
 
         for ax_name in ax_names
             cur = p.layout.fields[ax_name]
             cur = merge(p.style.layout[Symbol(ax, "axis")], cur)
+            p.layout.fields[ax_name] = cur
+        end
+
+        if isempty(ax_names)
+            nm = Symbol(ax, "axis")
+            p.layout.fields[nm] = deepcopy(p.style.layout[nm])
         end
     end
 
@@ -38,16 +44,21 @@ function JSON.lower(p::Plot)
         end
     end
 
+    _is3d = any(_ -> contains(string(_[:type]), "3d"), p.data)
+
     # apply layout attrs
     if !isempty(p.style.layout)
-        _apply_style_axis!(p, "x")
-        _apply_style_axis!(p, "y")
+        # force xaxis and yaxis if plot is 2d
+        _apply_style_axis!(p, "x", !_is3d)
+        _apply_style_axis!(p, "y", !_is3d)
+        _apply_style_axis!(p, "z")
 
         # extract this so we can pop! off xaxis and yaxis so they aren't
         # applied again
         la = deepcopy(p.style.layout)
         pop!(la.fields, :xaxis, nothing)
         pop!(la.fields, :yaxis, nothing)
+        pop!(la.fields, :zaxis, nothing)
         p.layout = merge(la, p.layout)
     end
 
@@ -75,11 +86,6 @@ end
 # Let string interpolation stringify to JSON format
 Base.print(io::IO, a::Union{Shape,GenericTrace,PlotlyAttribute,Layout,Plot}) = print(io, JSON.json(a))
 Base.print{T<:GenericTrace}(io::IO, a::Vector{T}) = print(io, JSON.json(a))
-
-# methods to re-construct a plot from JSON
-_symbol_dict(x) = x
-_symbol_dict(d::Associative) =
-    Dict{Symbol,Any}([(Symbol(k), _symbol_dict(v)) for (k, v) in d])
 
 GenericTrace(d::Associative{Symbol}) = GenericTrace(pop!(d, :type, "scatter"), d)
 GenericTrace{T<:AbstractString}(d::Associative{T}) = GenericTrace(_symbol_dict(d))

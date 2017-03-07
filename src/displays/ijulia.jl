@@ -10,7 +10,10 @@ end
 
 typealias JupyterPlot SyncPlot{JupyterDisplay}
 
-JupyterDisplay(p::Plot) = JupyterDisplay(p.divid, false, Condition())
+JupyterDisplay(p::Plot) = begin
+    _ijulia_eval_comm[] = Comm(:plotlyjs_eval)
+    JupyterDisplay(p.divid, false, Condition())
+end
 JupyterPlot(p::Plot) = JupyterPlot(p, JupyterDisplay(p))
 
 fork(jp::JupyterPlot) = JupyterPlot(fork(jp.plot))
@@ -72,7 +75,7 @@ end
 # ---------------- #
 
 _call_js(jd::JupyterDisplay, code) =
-    send_comm(_ijulia_eval_comm, Dict("code" => code))
+    send_comm(_ijulia_eval_comm[], Dict("code" => code))
 
 ## API Methods for JupyterDisplay
 _the_div_js(jd::JupyterDisplay) = "document.getElementById('$(jd.divid)')"
@@ -141,6 +144,13 @@ movetraces!(jd::JupyterDisplay, src::AbstractVector{Int}, dest::AbstractVector{I
     _call_plotlyjs(jd, "moveTraces", src-1, dest-1)
 
 redraw!(jd::JupyterDisplay) = _call_plotlyjs(jd, "redraw")
+purge!(jd::JupyterDisplay) = _call_plotlyjs(jd, "purge")
+
+to_image(jd::JupyterDisplay; kwargs...) =
+    _call_plotlyjs(jd, "to_image", Dict(kwargs))
+
+download_image(jd::JupyterDisplay; kwargs...) =
+    _call_plotlyjs(jd, "download_image", Dict(kwargs))
 
 # unexported (by plotly.js) api methods
 extendtraces!(jd::JupyterDisplay, update::Associative=Dict(),

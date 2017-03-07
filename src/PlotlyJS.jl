@@ -7,6 +7,8 @@ using JSON
 using Colors
 using DocStringExtensions
 
+import Base: ==
+
 # import LaTeXStrings and export the handy macros
 using LaTeXStrings
 export @L_mstr, @L_str
@@ -25,6 +27,10 @@ autoresize(b::Bool) = (_autoresize[1] = b; b)
 autoresize() = _autoresize[1]
 
 _isijulia() = isdefined(Main, :IJulia) && Main.IJulia.inited
+
+_symbol_dict(x) = x
+_symbol_dict(d::Associative) =
+    Dict{Symbol,Any}([(Symbol(k), _symbol_dict(v)) for (k, v) in d])
 
 # include these here because they are used below
 include("traces_layouts.jl")
@@ -80,7 +86,7 @@ export
 
     # plotly.js api methods
     restyle!, relayout!, addtraces!, deletetraces!, movetraces!, redraw!,
-    extendtraces!, prependtraces!,
+    extendtraces!, prependtraces!, purge!, to_image, download_image,
 
     # non-!-versions (forks, then applies, then returns fork)
     restyle, relayout, addtraces, deletetraces, movetraces, redraw,
@@ -88,6 +94,12 @@ export
 
     # helper methods
     plot, fork, vline, hline, attr
+
+    # new trace types
+    stem,
+
+    # frontend methods
+    init_notebook,
 
     # styles
     use_style!, style, Style
